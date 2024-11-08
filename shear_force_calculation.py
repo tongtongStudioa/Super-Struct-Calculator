@@ -62,7 +62,7 @@ class ShearCalculator(QWidget):
         hypothese_label = QLabel("""
         Ce programme calcule les efforts tranchants dans une section. 
         Hypothèses : 
-            - h et b de même ordre de grandeurs.
+            - h et b de même ordre de grandeurs. (Calculs non valables avec profilés minces)
         """)
         
         hypothese_label.setWordWrap(True)
@@ -75,14 +75,7 @@ class ShearCalculator(QWidget):
         self.profile_combobox.addItem("Rectangulaire")
         self.profile_combobox.addItem("Profil en I")
         self.profile_combobox.addItem("Profil en T")
-        self.profile_combobox.currentIndexChanged.connect(self.update_input_fields)
-        
-        combo_layout = QVBoxLayout()
-        combo_box_label = QLabel("Sélectionnez le profil :")
-        combo_layout.addWidget(combo_box_label)
-        combo_layout.addWidget(self.profile_combobox)
-        
-        
+
         
         # Disposition des champs d'entrée et des labels
         input_frame = QFrame(self)
@@ -114,7 +107,7 @@ class ShearCalculator(QWidget):
         self.auto_stiffness_center_checkbox.stateChanged.connect(self.toggle_stiffness_center_input)
         self.auto_stiffness_center_checkbox.setChecked(True)
         
-        hauteur_label = QLabel("Hauteur de la poutre (mm):")
+        """ hauteur_label = QLabel("Hauteur de la poutre (mm):")
         hauteur_label.setFixedWidth(210)
         self.entry_hauteur = QLineEdit(self)
         self.entry_hauteur.setText("600")
@@ -122,13 +115,9 @@ class ShearCalculator(QWidget):
         largeur_label = QLabel("Largeur de la poutre (mm):")
         largeur_label.setFixedWidth(210)
         self.entry_largeur = QLineEdit(self)
-        self.entry_largeur.setText("250")
+        self.entry_largeur.setText("250")"""
 
         # Organisation horizontale des labels et des champs de saisie
-        input_layout1 = QHBoxLayout()
-        input_layout1.addWidget(I_label)
-        input_layout1.addWidget(self.entry_quadratic_moment)
-
         input_layout2 = QHBoxLayout()
         input_layout2.addWidget(charge_label)
         input_layout2.addWidget(self.entry_charge)
@@ -137,30 +126,49 @@ class ShearCalculator(QWidget):
         input_layout3.addWidget(portee_label)
         input_layout3.addWidget(self.entry_portee)
 
+        input_layout1 = QHBoxLayout()
+        input_layout1.addWidget(I_label)
+        input_layout1.addWidget(self.entry_quadratic_moment)
+
         input_layout4 = QHBoxLayout()
         input_layout4.addWidget(stiffness_center_label)
         input_layout4.addWidget(self.entry_stiffness_center)
 
-        input_layout5 = QHBoxLayout()
+        # Champs d'entrée pour les dimensions, changent en fonction du profilé
+        self.input_forms_frame = QFrame(self)
+        self.createProfileInputs()
+        # Ajouter la connexion avec l'adaptateur de vue une fois la valeur "input_forms_frame" créé
+        self.profile_combobox.currentIndexChanged.connect(self.updateLayout)
+        
+        combo_layout = QHBoxLayout()
+        combo_box_label = QLabel("Sélectionnez le profil :")
+        combo_layout.addWidget(combo_box_label)
+        combo_layout.addWidget(self.profile_combobox)
+        
+        """input_layout5 = QHBoxLayout()
         input_layout5.addWidget(hauteur_label)
         input_layout5.addWidget(self.entry_hauteur)
 
         input_layout6 = QHBoxLayout()
         input_layout6.addWidget(largeur_label)
-        input_layout6.addWidget(self.entry_largeur)
+        input_layout6.addWidget(self.entry_largeur)"""
 
 
         # Ajout des entrées dans le frame
         vbox_input = QVBoxLayout()
-        vbox_input.addLayout(input_layout1)
-        vbox_input.addWidget(self.auto_moment_checkbox)
         vbox_input.addLayout(input_layout2)
         vbox_input.addLayout(input_layout3)
+        
+        vbox_input = QVBoxLayout()
+        vbox_input.addLayout(input_layout1)
+        vbox_input.addWidget(self.auto_moment_checkbox)
         vbox_input.addLayout(input_layout4)
         vbox_input.addWidget(self.auto_stiffness_center_checkbox)
-        vbox_input.addLayout(input_layout5)
-        vbox_input.addLayout(input_layout6)
+        vbox_input.addWidget(self.input_forms_frame)
+        #vbox_input.addLayout(input_layout5)
+        #vbox_input.addLayout(input_layout6)
         input_frame.setLayout(vbox_input)
+
 
 
         # Créer un widget de graphique avec matplotlib
@@ -189,6 +197,60 @@ class ShearCalculator(QWidget):
         main_layout.addWidget(self.result_label, alignment=Qt.AlignCenter)
         
         self.setLayout(main_layout)
+    
+    def createProfileInputs(self):
+        """Crée les champs d'entrée pour les dimensions en fonction du profilé."""
+       
+        self.clearLayout(self.input_forms_frame.layout())
+        layout = QVBoxLayout()
+
+        profile_type = self.profile_combobox.currentText()
+        
+        # Dimensions pour un profilé rectangulaire
+        if profile_type == "Rectangulaire":
+            self.entry_hauteur = self.createInputField("Hauteur (mm):", layout)
+            self.entry_largeur = self.createInputField("Largeur (mm):", layout)
+        
+        # Dimensions pour un profilé en H
+        elif profile_type == "Profilé en H":
+            self.entry_hauteur_totale = self.createInputField("Hauteur totale (mm):", layout)
+            self.entry_largeur_totale = self.createInputField("Largeur totale (mm):", layout)
+            self.entry_hauteur_ame = self.createInputField("Hauteur de l'âme (mm):", layout)
+            self.entry_epaisseur_ame = self.createInputField("Épaisseur de l'âme (mm):", layout)
+            self.entry_largeur_ailes = self.createInputField("Largeur des ailes (mm):", layout)
+            self.entry_epaisseur_ailes = self.createInputField("Épaisseur des ailes (mm):", layout)
+        
+        # Dimensions pour un profilé en T
+        elif profile_type == "Profilé en T":
+            self.entry_hauteur_totale = self.createInputField("Hauteur totale (mm):", layout)
+            self.entry_largeur_ame = self.createInputField("Largeur de l'âme (mm):", layout)
+            self.entry_epaisseur_ame = self.createInputField("Épaisseur de l'âme (mm):", layout)
+            self.entry_largeur_ailes = self.createInputField("Largeur de l'aile (mm):", layout)
+            self.entry_epaisseur_ailes = self.createInputField("Épaisseur de l'aile (mm):", layout)
+
+        self.input_forms_frame.setLayout(layout)
+
+    def createInputField(self, label_text, layout):
+        """Crée un champ d'entrée avec un label et l'ajoute à la mise en page."""
+        hbox = QHBoxLayout()
+        label = QLabel(label_text)
+        line_edit = QLineEdit(self)
+        hbox.addWidget(label)
+        hbox.addWidget(line_edit)
+        layout.addLayout(hbox)
+        return line_edit
+
+    def clearLayout(self, layout):
+        """Efface tous les widgets d'une mise en page."""
+        if layout is not None:
+            while layout.count():
+                child = layout.takeAt(0)
+                if child.widget():
+                    child.widget().deleteLater()
+
+    def updateLayout(self):
+        """Met à jour les champs d'entrée lorsque le profilé change."""
+        self.createProfileInputs()
         
     # Activer/désactiver la saisie du moment quadratique selon la case à cocher
     def toggle_moment_input(self, state):
@@ -206,6 +268,7 @@ class ShearCalculator(QWidget):
     def update_input_fields(self):
         """Mettre à jour les champs d'entrée en fonction du profil sélectionné."""
         selected_profile = self.profile_combobox.currentText()
+        
             
     # Fonction de calcul de la section d'acier
     def calculs_cisaillement_points_critiques(self):
@@ -267,6 +330,7 @@ class ShearCalculator(QWidget):
             QMessageBox.critical(self, "Erreur", "Problèmes lors de la mise en page")
             
     def distribution_cisaillement(self,h,V,I_z,b_u,b_y):
+        "Distribution du cisaillement sur pour une largeur constante."
         # Calcul de la contrainte de cisaillement à différentes hauteurs
         y = np.linspace(h/2, -h/2, 1000)  # Discrétisation de la hauteur
         tau = np.zeros_like(y)

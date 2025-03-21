@@ -1,4 +1,5 @@
 # Super-Struct-Calculator
+<<<<<<< HEAD
 A student project to understand different type of concept in engineer structure course.
 
 # Project structure
@@ -28,3 +29,6 @@ Super-struct-calculator/
 ├── License                 # License du projet  
 
 
+=======
+A student project to understand different type of concept in civil engineering course.
+>>>>>>> b6b90a45ccfda8c1657a223e51e2c5ee59e08ed3

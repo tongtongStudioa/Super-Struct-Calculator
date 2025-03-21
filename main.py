@@ -2,16 +2,18 @@
 """
 Created on Mon Oct 21 18:44:22 2024
 
-@author: La famille tong
+@author: Axel Vaissade
 """
-
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFrame, QMessageBox, QTabWidget
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtCore import Qt
 
+
 from shear_force_calculation import ShearCalculator
-from steel_section_calculation import ArmatureCalculator
+from steel_section.armature_calculator import ArmatureCalculator
+
+
 class MainApp(QTabWidget):
     def __init__(self):
         super().__init__()

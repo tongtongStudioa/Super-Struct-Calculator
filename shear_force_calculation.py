@@ -12,7 +12,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import numpy as np
-import matplotlib.pyplot as plt
+
+import matplotlib
+matplotlib.use('Qt5Agg')  # Ajoute cette ligne avant d'importer matplotlib.pyplot
+import matplotlib as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
@@ -133,16 +136,7 @@ class ShearCalculator(QWidget):
         self.auto_stiffness_center_checkbox = QCheckBox("Calculer le centre de rigidité automatiquement", self)
         self.auto_stiffness_center_checkbox.stateChanged.connect(self.toggle_stiffness_center_input)
         self.auto_stiffness_center_checkbox.setChecked(True)
-        
-        """ hauteur_label = QLabel("Hauteur de la poutre (mm):")
-        hauteur_label.setFixedWidth(210)
-        self.entry_hauteur = QLineEdit(self)
-        self.entry_hauteur.setText("600")
-
-        largeur_label = QLabel("Largeur de la poutre (mm):")
-        largeur_label.setFixedWidth(210)
-        self.entry_largeur = QLineEdit(self)
-        self.entry_largeur.setText("250")"""
+    
 
         # Organisation horizontale des labels et des champs de saisie
         input_layout2 = QHBoxLayout()
@@ -172,15 +166,6 @@ class ShearCalculator(QWidget):
         combo_box_label = QLabel("Sélectionnez le profil :")
         combo_layout.addWidget(combo_box_label)
         combo_layout.addWidget(self.profile_combobox)
-        
-        """input_layout5 = QHBoxLayout()
-        input_layout5.addWidget(hauteur_label)
-        input_layout5.addWidget(self.entry_hauteur)
-
-        input_layout6 = QHBoxLayout()
-        input_layout6.addWidget(largeur_label)
-        input_layout6.addWidget(self.entry_largeur)"""
-
 
         # Ajout des entrées dans le frame
         vbox_input = QVBoxLayout()
@@ -192,8 +177,6 @@ class ShearCalculator(QWidget):
         vbox_input.addLayout(input_layout4)
         vbox_input.addWidget(self.auto_stiffness_center_checkbox)
         vbox_input.addWidget(self.input_forms_frame)
-        #vbox_input.addLayout(input_layout5)
-        #vbox_input.addLayout(input_layout6)
         
         input_frame.setLayout(vbox_input)
         # Ajouter input_frame dans un QScrollArea
@@ -202,7 +185,7 @@ class ShearCalculator(QWidget):
         self.scroll_area.setWidget(input_frame)
 
         # Créer un widget de graphique avec matplotlib
-        self.canvas = FigureCanvas(plt.Figure(figsize=(9, 6)))
+        self.canvas = FigureCanvas(plt.pyplot.Figure(figsize=(9, 6)))
 
         # Bouton pour calculer la section d'acier
         calculate_button = QPushButton("Calculer la contrainte de cisaillement", self)
@@ -355,11 +338,12 @@ class ShearCalculator(QWidget):
                 I_z = float(self.entry_quadratic_moment.text())  # Moment quadratique en mm4
                 I_z = I_z * 10**-12  # Convertir en m^4
         
-                
+            # Afficher la distribution du cisaillement
             y, tau = self.distribution_cisaillement(V, I_z, y_g, h,b,h_ame,b_ame,h_aile,b_aile)
             self.display_graph(y, tau)
-            #t_max = self.calcul_cisaillement(V,I_z,b,b,h/2-y_g,h/2)
-            #self.result_label.setText(f"Contrainte de cisaillement max Txy = {t_max:.2f} MPa")
+            
+            t_max = self.calculer_cisaillement(V,I_z,b,b,h/2-y_g,h/2)
+            self.result_label.setText(f"Contrainte de cisaillement max Txy = {t_max:.2f} MPa")
         except ValueError:
             QMessageBox.critical(self, "Erreur", "Veuillez entrer des valeurs numériques valides.")
     
@@ -411,27 +395,6 @@ class ShearCalculator(QWidget):
                 else:
                     cisaillements_tau[i] = self.calculer_cisaillement(V,I_z,b_ame,b_aile,y,h/2)
         return (y_vals, cisaillements_tau)
-    
-        """def distribution_cisaillement(self,y,V,I_z,b_u,b_y,y_max):
-        "Distribution du cisaillement pour une largeur constante."
-        tau = np.zeros_like(y)
-        
-        for i, y_val in enumerate(y):
-            # Cisaillement dans l'âme
-            tau[i] = self.calcul_cisaillement(V,I_z,b_u,b_y,y_val,y_max)
-                
-        return tau"""
-    
-        # Tracé du graphique
-        """plt.figure(figsize=(8, 6))
-        plt.plot(tau, y, label='Contrainte de cisaillement')
-        plt.axhline(0, color='gray', linewidth=0.5)
-        plt.xlabel('Contrainte de cisaillement (MPa)')
-        plt.ylabel('Hauteur dans la section (mm)')
-        plt.title('Distribution de la contrainte de cisaillement dans une section en H')
-        plt.legend()
-        plt.grid(True)
-        plt.show()"""
         
     def display_graph(self,y,tau):
         try:
